@@ -58,6 +58,7 @@ main:
         leave
         ret
 ```
+
 2. **Who does the stack cleanup?**\
 Stack cleanup is done at the end of a procedure and is added in during compile time.  It does this by adding to `rsp` the number of bytes that need to be cleaned up.
 ```
@@ -66,7 +67,8 @@ Stack cleanup is done at the end of a procedure and is added in during compile t
 		call	function
 		add		esp, 8							;Caller cleans up the stack
 ```
-3. **What are the secrets of _va\_list_, _va\_start_, _va\_array_, and _va\_end_?**
+
+3. **What are the secrets of _va\_list_, _va\_start_, _va\_array_, and _va\_end_?**\
 va_list seems to just make space for a bunch of bytes for local variables in the function its creating the list in. va_start initilizes the va_list to retrive additional argumetns in the `...`. It does this by setting up local variables and registers in a way that would allow for arguments passed into the function can be read off no matter how many are placed. va_arg retrives the next argument passed in by checking to see if the end of the argument list has been reached, and if it hasn't, it loads the next argument on the stack into the va_list. va_end didn't seem to actually have any assembly code linked to it.  The documentation states that the function is supposed to perform the appropriate actions so that a function can return normally, but this functionallity doesn't show up in the disassebled binary.
 ```c++
 #include <stdarg.h>
@@ -238,6 +240,7 @@ main:
         ret
 ```
 With only two branches, the way these statements are compiled really are not that different at all.  They both cmp values and jump to the specific lable depending on the flags `cmp` set. Something I think is intersting is the way `default` is handled in the switch statement. It's basically exactly the same as what we have been coding by hand for a default jump back to the rest of the program, but here it's expicitly stated.\
+
 2. **What about a big number of branches? Especially with obvious differences of integers in those _case_ statements, for example, _case 1:, case 22:, case 333:, ..._**\
 It seems that for a big number of branches in switch statements, it seems to be much more optimal as it just has to compare a single value to a constant.  It acts almost like a lookup table, in which the lable that needs to be jumped to is only dependent on if the case matches the expression.  We can see this in the following code in C:
 ```c
