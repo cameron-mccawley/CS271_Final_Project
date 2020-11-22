@@ -2,7 +2,7 @@
 
 ## 2.3.1 C
 ### Variable Arguments
-1. **How does C support variable arguments?**
+1. **How does C support variable arguments?**\
 C supports variable arguments by storing local variables on the stack.  When a function is called that uses variable arguments in a 64 bit binary, it reads from arguments passed by registers.  What is interesting here is how when there are more than six arguments passed on the stack, rather than passing everything by registers, it uses both the registers and the stack to pass arguments, and the function that is being called can read from both and store them as local variables.  
 So this, which shows a mix of passing variables and values:
 ```c++
@@ -58,7 +58,7 @@ main:
         leave
         ret
 ```
-2. **Who does the stack cleanup?**
+2. **Who does the stack cleanup?**\
 Stack cleanup is done at the end of a procedure and is added in during compile time.  It does this by adding to `rsp` the number of bytes that need to be cleaned up.
 ```
 		push	2
@@ -154,10 +154,10 @@ main:
         pop     rbp
         ret
 ```
-So from this, it looks like va_start, va_arg, and va_end act as a way to query for the paramter list.  The va_arg macro translates the list into an actual argumetnt value, and then advances it to the next paramter in the list.	We also see that va_list is just a byte pointer, which va_start assigns it what to point to.  Not so secret anymore :)
+So from this, it looks like va_start, va_arg, and va_end act as a way to query for the paramter list.  The va_arg macro translates the list into an actual argumetnt value, and then advances it to the next paramter in the list.	We also see that va_list is just a byte pointer, which va_start assigns it what to point to.  Not so secret anymore :)\
 
 ### Control Flows
-1. **With only two branches, is the assembly similar between _if/else_ and _switch/case_?**
+1. **With only two branches, is the assembly similar between _if/else_ and _switch/case_?**\
 For _if/else_:
 ```c++
 int main(){
@@ -237,8 +237,8 @@ main:
         leave
         ret
 ```
-With only two branches, the way these statements are compiled really are not that different at all.  They both cmp values and jump to the specific lable depending on the flags `cmp` set. Something I think is intersting is the way `default` is handled in the switch statement. It's basically exactly the same as what we have been coding by hand for a default jump back to the rest of the program, but here it's expicitly stated.
-2. **What about a big number of branches? Especially with obvious differences of integers in those _case_ statements, for example, _case 1:, case 22:, case 333:, ..._**
+With only two branches, the way these statements are compiled really are not that different at all.  They both cmp values and jump to the specific lable depending on the flags `cmp` set. Something I think is intersting is the way `default` is handled in the switch statement. It's basically exactly the same as what we have been coding by hand for a default jump back to the rest of the program, but here it's expicitly stated.\
+2. **What about a big number of branches? Especially with obvious differences of integers in those _case_ statements, for example, _case 1:, case 22:, case 333:, ..._**\
 It seems that for a big number of branches in switch statements, it seems to be much more optimal as it just has to compare a single value to a constant.  It acts almost like a lookup table, in which the lable that needs to be jumped to is only dependent on if the case matches the expression.  We can see this in the following code in C:
 ```c
 int main(){
@@ -354,27 +354,27 @@ main:
 
 ## 2.3.2 C++
 ### Passing Parameters
-1. **C++ supports passing parameters by values, pointers, and references. How are they different in ASM?**
+1. **C++ supports passing parameters by values, pointers, and references. How are they different in ASM?**\
 
 ### C++ Object Model (Encapsulation Only)
-1. **Life Cycle: Create an object on the stack. When is the constructor called? What about the destructor?**
+1. **Life Cycle: Create an object on the stack. When is the constructor called? What about the destructor?**\
 
-2. **Memory Layout: Inspecting the addresses of those class members, are the contiguous in memory when instantiated? Where are they located? Are those member variables and member functions far away from each other?**
+2. **Memory Layout: Inspecting the addresses of those class members, are the contiguous in memory when instantiated? Where are they located? Are those member variables and member functions far away from each other?**\
 
-3. **This Pointer: Inspecting the assembly of a member function, is there an additional parameter? What about a static function defined in the class?**
+3. **This Pointer: Inspecting the assembly of a member function, is there an additional parameter? What about a static function defined in the class?**\
 
-4. **Memory Layout: Create another object on the stack. Are these on-stack objects in a contiguous memory layout?**
+4. **Memory Layout: Create another object on the stack. Are these on-stack objects in a contiguous memory layout?**\
 
-5. **Life Cycle: Create an object on the heap.  When is the constructor called? The destructor?**
+5. **Life Cycle: Create an object on the heap.  When is the constructor called? The destructor?**\
 
-6. **Memory Layout: Create another object on the heap. Are these on-heap objects in a contiguous memory layout?**
+6. **Memory Layout: Create another object on the heap. Are these on-heap objects in a contiguous memory layout?**\
 
-7. **Memory Layout: Are there more than one copy of member functions after so many objects have been created?**
+7. **Memory Layout: Are there more than one copy of member functions after so many objects have been created?**\
 
-8. **Keywords: If we change _class_ to _struct_, does it make any difference in ASM?**
+8. **Keywords: If we change _class_ to _struct_, does it make any difference in ASM?**\
 
 ### C++ Operators
-1. **For the printing code, `std::cout << "Hello World!"`, what essentially is `<<`? An x86 instruction? What is `std::cout`? A constant?**
+1. **For the printing code, `std::cout << "Hello World!"`, what essentially is `<<`? An x86 instruction? What is `std::cout`? A constant?**\
 The `<<` operator when decompiled is just a function.  More specifically, the function is an operator overload, which takes in both left and right values.  In the operator overload, we see that the string address is passed into `esi`, and the address of the exported function is placed in `edi`. 
 ```C++
 #include <iostream>
@@ -396,6 +396,6 @@ main:
         ret
 ```
 ## 2.3.3 ABIs
-1. **Does it matter which languages were used in coding Win32 libraries, as long as we know the specifications, like the calling coventions, from MSDN?**
+1. **Does it matter which languages were used in coding Win32 libraries, as long as we know the specifications, like the calling coventions, from MSDN?**\
 
 
