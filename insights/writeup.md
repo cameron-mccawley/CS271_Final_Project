@@ -358,15 +358,135 @@ main:
 ## 2.3.2 C++
 ### Passing Parameters
 1. **C++ supports passing parameters by values, pointers, and references. How are they different in ASM?**  
+Something interesting here is that they are all not that different, at least between passing by pointer and passing by reference.  Passing by value seems to simply move the value into another register, and then call the function, essentially creating a copy of that variable in the process.  Passing by reference and by pointer however pass the actual address at which the value is located to the function.  This process is exactly the same for both reference and value, and there is absolutly no difference between the two other than the added safty in passing by reference by the compiler.
+
+```c++
+void value(int a){
+    return;
+}
+
+void pointer(int* a){
+    return;
+}
+
+void reference(int &a){ 
+    return;
+}
+
+int main(){
+    int a = 5;
+    value(a);
+    pointer(&a);
+    reference(a);
+
+    return 0;    
+}
+```
+```
+value(int):
+        push    rbp
+        mov     rbp, rsp
+        mov     DWORD PTR [rbp-4], edi
+        nop
+        pop     rbp
+        ret
+pointer(int*):
+        push    rbp
+        mov     rbp, rsp
+        mov     QWORD PTR [rbp-8], rdi
+        nop
+        pop     rbp
+        ret
+reference(int&):
+        push    rbp
+        mov     rbp, rsp
+        mov     QWORD PTR [rbp-8], rdi
+        nop
+        pop     rbp
+        ret
+main:
+        push    rbp
+        mov     rbp, rsp
+        sub     rsp, 16
+        mov     DWORD PTR [rbp-4], 5
+        mov     eax, DWORD PTR [rbp-4]
+        mov     edi, eax
+        call    value(int)
+        lea     rax, [rbp-4]
+        mov     rdi, rax
+        call    pointer(int*)
+        lea     rax, [rbp-4]
+        mov     rdi, rax
+        call    reference(int&)
+        mov     eax, 0
+        leave
+        ret
+```
 
 ### C++ Object Model (Encapsulation Only)
 1. **Life Cycle: Create an object on the stack. When is the constructor called? What about the destructor?**  
+The constructor being called is actually one of the last things to be called in the object creation process.  The first thing that happens is memory on the stack is allocated for all the member varaibles and functions to reside, only after creating room in memory on the stack does the actual constructor function get called, and its called automatically when the object is created. The destructor is called automatically at the end of whatever function the object was created in.  This can be seen here:
+```
+   main:
+        push    rbp
+        mov     rbp, rsp
+        push    rbx
+        sub     rsp, 24
+        lea     rax, [rbp-20]
+        mov     rdi, rax
+        call    A::A() [complete object constructor]
+        mov     ebx, 0
+        lea     rax, [rbp-20]
+        mov     rdi, rax
+        call    A::~A() [complete object destructor]
+        mov     eax, ebx
+        mov     rbx, QWORD PTR [rbp-8]
+        leave
+        ret
+```
 
-2. **Memory Layout: Inspecting the addresses of those class members, are the contiguous in memory when instantiated? Where are they located? Are those member variables and member functions far away from each other?**  
+2. **Memory Layout: Inspecting the addresses of those class members, are they contiguous in memory when instantiated? Where are they located? Are those member variables and member functions far away from each other?**   
+Yes! When an instance of a class is instantiated, it will occupy a piece of memory that it will use to contain member functions and variables.  If we had a class:
+```
+class C
+{
+   int c;
+   int d;
+};
+```
+And then instantiate it as `C ourClass`, then `ourClass.c` and `ourClass.d` will actually be right next to eachother in memory.  Assuming that an int on this machine is 4 bytes, then when `ourClass` is created, there will be 8 bytes of memory set aside for the two integers, and so our instance of that class is 8 bytes. This also has the added effect that `ourClass` and `ourClass.c` will share the same memory address.
 
 3. **This Pointer: Inspecting the assembly of a member function, is there an additional parameter? What about a static function defined in the class?**  
 
+
 4. **Memory Layout: Create another object on the stack. Are these on-stack objects in a contiguous memory layout?**  
+Yes, objects created on the stack are all contiguous in memory.  This can be seen here:
+```C++
+class A{
+	public:
+		void setNum(int n){
+			num = n;
+			return;
+		}
+		int getNum(){
+			return num;
+		}
+	private:
+		int num;
+};
+
+int main(){
+	int b;
+	A a;				//0x00EFF7E8
+	a.setNum(4);
+	b = a.getNum();
+	A c;				//0x00EFF7DC
+	c.setNum(5);
+	A d;				//0x00EFF7D0
+	return 0;
+}
+```
+We can see the last byte of each of the addresses are in incrementing order, and are close enough together that it can be inferred that they are contiguous.
 
 5. **Life Cycle: Create an object on the heap.  When is the constructor called? The destructor?**  
 
@@ -374,7 +494,46 @@ main:
 
 7. **Memory Layout: Are there more than one copy of member functions after so many objects have been created?**  
 
-8. **Keywords: If we change _class_ to _struct_, does it make any difference in ASM?**  
+8. **Keywords: If we change _class_ to _struct_, does it make any difference in ASM?**   
+Nope!  Nothing at all changes.  You can see in these two code blocks that they are identical:
+```
+;class
+main:
+        push    rbp
+        mov     rbp, rsp
+        push    rbx
+        sub     rsp, 24
+        lea     rax, [rbp-20]
+        mov     rdi, rax
+        call    A::A() [complete object constructor]
+        mov     ebx, 0
+        lea     rax, [rbp-20]
+        mov     rdi, rax
+        call    A::~A() [complete object destructor]
+        mov     eax, ebx
+        mov     rbx, QWORD PTR [rbp-8]
+        leave
+        ret
+```
+```
+;struct
+main:
+        push    rbp
+        mov     rbp, rsp
+        push    rbx
+        sub     rsp, 24
+        lea     rax, [rbp-20]
+        mov     rdi, rax
+        call    A::A() [complete object constructor]
+        mov     ebx, 0
+        lea     rax, [rbp-20]
+        mov     rdi, rax
+        call    A::~A() [complete object destructor]
+        mov     eax, ebx
+        mov     rbx, QWORD PTR [rbp-8]
+        leave
+        ret
+```
 
 ### C++ Operators
 1. **For the printing code, `std::cout << "Hello World!"`, what essentially is `<<`? An x86 instruction? What is `std::cout`? A constant?**  
@@ -400,5 +559,5 @@ main:
 ```
 ## 2.3.3 ABIs
 1. **Does it matter which languages were used in coding Win32 libraries, as long as we know the specifications, like the calling coventions, from MSDN?**  
-
+It does not matter at all which library is used, as long as at the end of the day these languages can be compiled into static libraries.  This is becauase these languages get compiled into assembly language, it doesnt matter what language you start with, if you are trying to call windows functions then you are going to be able to do that in assembl.
 
