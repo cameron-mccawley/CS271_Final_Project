@@ -156,7 +156,7 @@ main:
         pop     rbp
         ret
 ```
-So from this, it looks like va_start, va_arg, and va_end act as a way to query for the paramter list.  The va_arg macro translates the list into an actual argumetnt value, and then advances it to the next paramter in the list.	We also see that va_list is just a byte pointer, which va_start assigns it what to point to.  Not so secret anymore :)\
+So from this, it looks like va_start, va_arg, and va_end act as a way to query for the paramter list.  The va_arg macro translates the list into an actual argumetnt value, and then advances it to the next paramter in the list.	We also see that va_list is just a byte pointer, which va_start assigns it what to point to.  Not so secret anymore :)   
 
 ### Control Flows
 1. **With only two branches, is the assembly similar between _if/else_ and _switch/case_?**  
@@ -457,6 +457,40 @@ class C
 And then instantiate it as `C ourClass`, then `ourClass.c` and `ourClass.d` will actually be right next to eachother in memory.  Assuming that an int on this machine is 4 bytes, then when `ourClass` is created, there will be 8 bytes of memory set aside for the two integers, and so our instance of that class is 8 bytes. This also has the added effect that `ourClass` and `ourClass.c` will share the same memory address.
 
 3. **This Pointer: Inspecting the assembly of a member function, is there an additional parameter? What about a static function defined in the class?**  
+There is in fact an additional parameter pushed onto the stack when a member function is called.  This additional paramter is a pointer to the class that holds the member function.  We can see this in action here:
+```c++
+class A{
+public:
+    void Hello(int, int) {}
+};
+
+void Hello(A *a, int, int) {}
+
+int main(){
+    A a;
+    Hello(&a, 0, 0);
+    a.Hello(0, 0);
+    return 0;
+}
+```
+
+Here I have two functions, one is a member function with two paramters, one is a normal function outside with a "this" pointer passed in.
+
+```
+		lea     rax, [rbp-1]
+        mov     edx, 0
+        mov     esi, 0
+        mov     rdi, rax
+        call    Hello(A*, int, int)
+
+        lea     rax, [rbp-1]
+        mov     edx, 0
+        mov     esi, 0
+        mov     rdi, rax
+        call    A::Hello(int, int)
+```
+
+And this is the disassembly.  You can see how the registers are set up exactly the same for each, even though they take a different number of parameters.  This is an implicit parameter, and is how the "this pointer" works.
 
 
 4. **Memory Layout: Create another object on the stack. Are these on-stack objects in a contiguous memory layout?**  
@@ -489,10 +523,56 @@ int main(){
 We can see the last byte of each of the addresses are in incrementing order, and are close enough together that it can be inferred that they are contiguous.
 
 5. **Life Cycle: Create an object on the heap.  When is the constructor called? The destructor?**  
+The constructor seems to be called at the same time as an object on the stack would.  The only difference is that the function `operator new` is called before the constructor's call.  This is different than the deconstructor, which doesn't seem to be called when there is nothing in it. Instead we see that the delete operator is called.  When I do expland the destructor, we see that it is called only a few lines before the operator delete. It also does a `test`, but I have yet to figure out what that is doing there:
+```c++
+class A{
+    public:
+    A();
+    ~A(){
+        int i = 0;
+    }
+    void setNum(int n){
+        num = n;
+    }
+
+    int getNum(){
+        return num;
+    }
+
+    private:
+    int num;
+};
+
+int main(){
+
+    A *a;
+    a = new A();
+    delete  a;
+    return 0;  
+}
+```
+
+```
+		call    operator new(unsigned long)
+        mov     rbx, rax
+        mov     rdi, rbx
+        call    A::A() [complete object constructor]
+        mov     QWORD PTR [rbp-24], rbx
+        mov     rbx, QWORD PTR [rbp-24]
+        test    rbx, rbx
+        je      .L3
+        mov     rdi, rbx
+        call    A::~A() [complete object destructor]
+        mov     esi, 4
+        mov     rdi, rbx
+        call    operator delete(void*, unsigned long)
+```
 
 6. **Memory Layout: Create another object on the heap. Are these on-heap objects in a contiguous memory layout?**  
+No they are not.  In fact, it seems pretty random as to where each of these on-heap objects are located in memory. This is becuase memory on the heap is allocated on a need be basis through malloc, and changes in memory can occur between those calls, so its no guarantee that these objects will be contiguous in memory. 
 
 7. **Memory Layout: Are there more than one copy of member functions after so many objects have been created?**  
+Nope.  when an executable is created, the member functions of classes are only created once, and each seperate object of that class will use the same function.  this makes sense as it would take up way too much space if each object had its own set of functions, and also the fact that there really is no need for objects of the same class to have different functions, as they have the same purpose.
 
 8. **Keywords: If we change _class_ to _struct_, does it make any difference in ASM?**   
 Nope!  Nothing at all changes.  You can see in these two code blocks that they are identical:
