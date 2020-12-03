@@ -639,5 +639,5 @@ main:
 ```
 ## 2.3.3 ABIs
 1. **Does it matter which languages were used in coding Win32 libraries, as long as we know the specifications, like the calling coventions, from MSDN?**  
-It does not matter at all which library is used, as long as at the end of the day these languages can be compiled into static libraries.  This is becauase these languages get compiled into assembly language, it doesnt matter what language you start with, if you are trying to call windows functions then you are going to be able to do that in assembl.
+It does not matter at all which library is used, as long as at the end of the day these languages can be compiled into static libraries.  This is becauase these languages get compiled into assembly language, it doesnt matter what language you start with, if you are trying to call windows functions then you are going to be able to do that in assembly.
 
