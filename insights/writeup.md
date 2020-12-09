@@ -62,10 +62,10 @@ main:
 2. **Who does the stack cleanup?**  
 Stack cleanup is done at the end of a procedure and is added in during compile time.  It does this by adding to `rsp` the number of bytes that need to be cleaned up.
 ```
-		push	2
-		push	1
-		call	function
-		add		esp, 8							;Caller cleans up the stack
+	push	2
+	push	1
+	call	function
+	add		esp, 8						;Caller cleans up the stack
 ```
 
 3. **What are the secrets of _va\_list_, _va\_start_, _va\_array_, and _va\_end_?**  
@@ -111,7 +111,7 @@ function:
         movaps  XMMWORD PTR [rbp-48], xmm5
         movaps  XMMWORD PTR [rbp-32], xmm6
         movaps  XMMWORD PTR [rbp-16], xmm7
-.L8:												;va_start is implemented in this block
+.L8:									;va_start is implemented in this block
         pxor    xmm0, xmm0
         movsd   QWORD PTR [rbp-192], xmm0
         mov     DWORD PTR [rbp-216], 8
@@ -122,7 +122,7 @@ function:
         mov     QWORD PTR [rbp-200], rax
         mov     DWORD PTR [rbp-180], 0
         jmp     .L3
-.L6:												;Here we can see va_arg in both .L6 and .L4
+.L6:									;Here we can see va_arg in both .L6 and .L4
         mov     eax, DWORD PTR [rbp-212]
         cmp     eax, 175
         ja      .L4
@@ -134,7 +134,7 @@ function:
         mov     rax, QWORD PTR [rbp-208]
         add     rax, 8
         mov     QWORD PTR [rbp-208], rax
-.L5:												;increment by 1 in for loop
+.L5:									;increment by 1 in for loop
         add     DWORD PTR [rbp-180], 1
 .L3:
         mov     eax, DWORD PTR [rbp-180]
@@ -151,7 +151,7 @@ main:
         mov     esi, 2
         mov     edi, 1
         mov     eax, 0
-        call    function							;Call function
+        call    function						;Call function
         mov     eax, 0
         pop     rbp
         ret
@@ -477,7 +477,7 @@ int main(){
 Here I have two functions, one is a member function with two paramters, one is a normal function outside with a "this" pointer passed in.
 
 ```
-		lea     rax, [rbp-1]
+	lea     rax, [rbp-1]
         mov     edx, 0
         mov     esi, 0
         mov     rdi, rax
@@ -553,7 +553,7 @@ int main(){
 ```
 
 ```
-		call    operator new(unsigned long)
+	call    operator new(unsigned long)
         mov     rbx, rax
         mov     rdi, rbx
         call    A::A() [complete object constructor]
